@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract lotteryMachine is ERC721, Ownable {
-    constructor() ERC721("{{ $data.Name }}", "MNFT") {}
+    constructor() ERC721("{{ $engine.Name }}", "MNFT") {}
 
     uint256 public totalTokensMinted;
 

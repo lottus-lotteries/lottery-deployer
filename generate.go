@@ -68,3 +68,18 @@ func Generate(name, tpl string, data any, outputFile string) (err error) {
 
 	return nil
 }
+
+func GenerateNewLottery(name string, tickets int) error {
+	lotteryData := &ContractData{
+		name,
+		tickets,
+	}
+	lotteryEngine := NewEngine(lotteryData)
+
+	err := lotteryEngine.GenerateWrapper()
+	if err != nil {
+		return fmt.Errorf("generating lottery: %w", err)
+	}
+
+	return nil
+}

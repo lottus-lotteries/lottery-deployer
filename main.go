@@ -3,6 +3,7 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
 )
@@ -53,26 +54,11 @@ func setupRoutes() {
 }
 
 func main() {
-	err := generateNewLottery("FirstLottery", 1000)
+	err := GenerateNewLottery("FirstLottery", 1000)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	setupRoutes()
 	http.ListenAndServe(":8080", nil)
-}
-
-func generateNewLottery(name string, tickets int) error {
-	lotteryData := &ContractData{
-		name,
-		tickets,
-	}
-	lotteryEngine := NewEngine(lotteryData)
-
-	err := lotteryEngine.GenerateWrapper()
-	if err != nil {
-		return fmt.Errorf("generating lottery: %w", err)
-	}
-
-	return nil
 }
