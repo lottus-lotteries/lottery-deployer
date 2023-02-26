@@ -54,11 +54,11 @@ func setupRoutes() {
 }
 
 func main() {
-	err := GenerateNewLottery("FirstLottery", 1000)
+	err := GenerateNewLottery("lotteryContract", "FirstLottery", "MFL", 1000)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	setupRoutes()
-	http.ListenAndServe(":8080", nil)
+	//setupRoutes()
+	//http.ListenAndServe(":8080", nil)
 }

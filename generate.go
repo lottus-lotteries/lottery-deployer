@@ -12,8 +12,10 @@ import (
 var tplLotteryMachineTemplate string
 
 type ContractData struct {
-	Name    string
-	Tickets int
+	ContractName string
+	LotteryName  string
+	Abbr         string
+	Tickets      int
 }
 
 type Engine struct {
@@ -34,7 +36,7 @@ func NewEngine(data *ContractData) *Engine {
 
 func (e *Engine) GenerateWrapper() error {
 
-	err := Generate("Lottery", tplLotteryMachineTemplate, e.Data, "./contracts/lotteryMachine.sol")
+	err := Generate("Lottery", tplLotteryMachineTemplate, e.Data, fmt.Sprintf("./contracts/%s.sol", e.Data.ContractName))
 	if err != nil {
 		return fmt.Errorf("generating lottery contract: %w", err)
 	}
@@ -69,9 +71,11 @@ func Generate(name, tpl string, data any, outputFile string) (err error) {
 	return nil
 }
 
-func GenerateNewLottery(name string, tickets int) error {
+func GenerateNewLottery(contractName, lotteryName, abbr string, tickets int) error {
 	lotteryData := &ContractData{
-		name,
+		contractName,
+		lotteryName,
+		abbr,
 		tickets,
 	}
 	lotteryEngine := NewEngine(lotteryData)
@@ -79,6 +83,13 @@ func GenerateNewLottery(name string, tickets int) error {
 	err := lotteryEngine.GenerateWrapper()
 	if err != nil {
 		return fmt.Errorf("generating lottery: %w", err)
+	}
+
+	fmt.Println("\n----------CONTRACT CREATED----------")
+
+	err = LaunchLotteries("goerli")
+	if err != nil {
+		return fmt.Errorf("deploying all contracts: %w", err)
 	}
 
 	return nil
