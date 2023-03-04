@@ -12,7 +12,10 @@ module.exports = {
     goerli: {
       provider: () => new HDWalletProvider(MNEMONIC, INFURA_API_KEY),
       network_id: '5',
-      gas: 4465030
+    },
+    sepolia: {
+      provider: () => new HDWalletProvider(MNEMONIC, INFURA_API_KEY),
+      network_id: '11155111',
     }
   },
   compilers: {

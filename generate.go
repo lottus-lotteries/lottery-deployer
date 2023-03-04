@@ -11,7 +11,12 @@ import (
 //go:embed templates/lotteryMachine.sol.gotmpl
 var tplLotteryMachineTemplate string
 
+//go:embed templates/1_deploy_contract.js.gotmpl
+var tplLotteryDeployerTemplate string
+
 type ContractData struct {
+	DaysTilClose uint64
+	ContractFull string
 	ContractName string
 	LotteryName  string
 	Abbr         string
@@ -36,9 +41,14 @@ func NewEngine(data *ContractData) *Engine {
 
 func (e *Engine) GenerateWrapper() error {
 
-	err := Generate("Lottery", tplLotteryMachineTemplate, e.Data, fmt.Sprintf("./contracts/%s.sol", e.Data.ContractName))
+	err := Generate("lottery", tplLotteryMachineTemplate, e.Data, fmt.Sprintf("./contracts/%s.sol", e.Data.ContractName))
 	if err != nil {
 		return fmt.Errorf("generating lottery contract: %w", err)
+	}
+
+	err = Generate("deployer", tplLotteryDeployerTemplate, e.Data, "./migrations/1_deploy_contract.js")
+	if err != nil {
+		return fmt.Errorf("generating lottery deployer: %w", err)
 	}
 	return nil
 
@@ -47,13 +57,10 @@ func (e *Engine) GenerateWrapper() error {
 func Generate(name, tpl string, data any, outputFile string) (err error) {
 	var w io.Writer
 
-	fmt.Printf("%s\n", "Creating Lottery Machine Smart Contract...")
 	w, err = os.Create(outputFile)
 	if err != nil {
 		return fmt.Errorf("creating file %s: %w", outputFile, err)
 	}
-
-	fmt.Printf("%s\n", "Parsing Lottery Information...")
 
 	tmpl, err := template.New(name).Parse(tpl)
 	if err != nil {
@@ -71,8 +78,10 @@ func Generate(name, tpl string, data any, outputFile string) (err error) {
 	return nil
 }
 
-func GenerateNewLottery(contractName, lotteryName, abbr string, tickets int) error {
+func GenerateNewLottery(contractFull, contractName, lotteryName, abbr string, tickets int, daysTil uint64) ([]byte, []byte, error) {
 	lotteryData := &ContractData{
+		daysTil,
+		contractFull,
 		contractName,
 		lotteryName,
 		abbr,
@@ -80,17 +89,23 @@ func GenerateNewLottery(contractName, lotteryName, abbr string, tickets int) err
 	}
 	lotteryEngine := NewEngine(lotteryData)
 
+	fmt.Println("Contract being created...")
 	err := lotteryEngine.GenerateWrapper()
 	if err != nil {
-		return fmt.Errorf("generating lottery: %w", err)
+		return nil, nil, fmt.Errorf("generating lottery: %w", err)
 	}
 
-	fmt.Println("\n----------CONTRACT CREATED----------")
-
-	err = LaunchLotteries("goerli")
+	err = lotteryEngine.GenerateWrapper()
 	if err != nil {
-		return fmt.Errorf("deploying all contracts: %w", err)
+		return nil, nil, fmt.Errorf("generating deployer: %w", err)
+	}
+	fmt.Println("Now launching lottery...")
+
+	deployLog, abiLog, err := LaunchLotteries("sepolia", contractName)
+	if err != nil {
+		return nil, nil, fmt.Errorf("deploying all contracts: %w", err)
 	}
 
-	return nil
+	fmt.Println("Done")
+	return deployLog, abiLog, nil
 }

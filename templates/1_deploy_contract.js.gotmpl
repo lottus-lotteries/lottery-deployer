@@ -1,0 +1,6 @@
+{{$engine := . -}}
+const lotteryMachine = artifacts.require("{{ $engine.ContractFull}}");
+
+module.exports = function(deployer) {
+    deployer.deploy(lotteryMachine, {{engine.DaysTilClose}});
+};

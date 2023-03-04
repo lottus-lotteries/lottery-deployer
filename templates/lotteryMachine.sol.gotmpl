@@ -6,20 +6,32 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract {{$engine.ContractName}} is ERC721, Ownable {
-    constructor() ERC721("{{ $engine.LotteryName }}", "{{ $engine.Abbr }}") {}
-
+    address public contractOwner;
     uint256 public totalTokensMinted;
+    uint256 public closingTime;
+    bool public hasMintedAll = false;
 
-    function mintAll(uint256 numberOfTokens) public onlyOwner {
-        for (uint256 i = 0; i < numberOfTokens; i++) {
-            totalTokensMinted++;
-            _safeMint(msg.sender, totalTokensMinted);
-        }
+    constructor((uint256 daysUntilClosing)) ERC721("{{ $engine.LotteryName }}", "{{ $engine.Abbr }}") {
+        require(daysUntilClosing > 0, "Closing time must be in the future");
+        contractOwner = msg.sender;
+        closingTime = block.timestamp + (daysUntilClosing * 1 days);
     }
 
-    function transfer(address to, uint256 tokenId) public onlyOwner {
+    function transfer(address recipient, uint256 tokenId) public{
+        require(block.timestamp < closingTime, "Lottery has already closed");
         require(_exists(tokenId), "ERC721: token does not exist");
-        require(_isApprovedOrOwner(msg.sender, tokenId), "ERC721: transfer caller is not owner nor approved");
-        _transfer(_msgSender(), to, tokenId);
+        _transfer(msg.sender, recipient, tokenId);
+    }
+
+    function mintAll(uint256 numberOfTokens) public{
+        require(block.timestamp < closingTime, "Lottery has already closed");
+        require(!hasMintedAll, "MintAll can only be called once");
+
+        for (uint256 i = 0; i < numberOfTokens; i++) {
+            totalTokensMinted++;
+            _safeMint(contractOwner, totalTokensMinted);
+        }
+
+        hasMintedAll = true;
     }
 }
